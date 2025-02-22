@@ -48,31 +48,39 @@ val_ds = labeled_ds.skip(train_size)
 train_ds = train_ds.shuffle(1000).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 val_ds = val_ds.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
-# Build a simple CNN classification model
+# Updated model architecture with built-in data augmentation layers
 model = tf.keras.models.Sequential([
-    tf.keras.layers.InputLayer(input_shape=IMG_SIZE + (3,)),
+    tf.keras.layers.Input(shape=IMG_SIZE + (3,)),
+    # Data augmentation layers
+    tf.keras.layers.RandomRotation(0.1),
+    tf.keras.layers.RandomZoom(0.1),
     tf.keras.layers.Rescaling(1./255),
-    tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
+    # Convolutional blocks
+    tf.keras.layers.Conv2D(32, (3, 3), activation='relu', padding='same'),
     tf.keras.layers.MaxPooling2D(),
-    tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+    tf.keras.layers.Conv2D(64, (3, 3), activation='relu', padding='same'),
     tf.keras.layers.MaxPooling2D(),
     tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(64, activation='relu'),
     tf.keras.layers.Dense(NUM_CLASSES, activation='softmax')
 ])
 
+# Compile the model
 model.compile(optimizer='adam',
               loss='sparse_categorical_crossentropy',
               metrics=['accuracy'])
 model.summary()
 
-# Train model
-EPOCHS = 2
-model.fit(train_ds, validation_data=val_ds, epochs=EPOCHS)
+# Set up callbacks similar to facial_expression
+es = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+rlrop = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=1e-6)
 
-# Evaluate model on validation data
-eval_results = model.evaluate(val_ds)
-print("Evaluation results:", eval_results)
+# Train model using the tf.data.Dataset objects
+EPOCHS = 5
+model.fit(train_ds,
+          validation_data=val_ds,
+          epochs=EPOCHS,
+          callbacks=[es, rlrop])
 
 # Save the trained model
 model.save(os.path.join(os.getcwd(), 'gesture_model.keras'))
