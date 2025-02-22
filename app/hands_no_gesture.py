@@ -2,15 +2,17 @@ import sys
 import cv2
 import numpy as np
 import mss
+import mediapipe as mp
+import os
+
 from PyQt5.QtWidgets import QApplication, QWidget, QBoxLayout, QPushButton, QLabel
 from PyQt5.QtGui import QPainter, QPen, QColor, QIcon, QPixmap
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QPoint
-import os
+from PyQt5.QtSvg import QSvgRenderer
 
 # For Keras models.
 from tensorflow.keras.models import load_model  # type: ignore
 from tensorflow.keras.preprocessing.image import img_to_array  # type: ignore
-from PyQt5.QtSvg import QSvgRenderer
 
 #####################
 # Constants
@@ -42,11 +44,9 @@ FACE_MODEL_WEIGHTS = os.path.join(BASE_DIR, "models", "face", "res10_300x300_ssd
 # Emotion model (Keras) for faces.
 EMOTION_MODEL_PATH = os.path.join(BASE_DIR, "models", "emotion", "emotion.keras")
 EMOTION_INPUT_SIZE = (48, 48)  # Expected input size for the emotion model.
-# Gesture model for hand gestures.
+# Gesture model for hand gestures (if you want to add gesture logic later).
 GESTURE_MODEL_PATH = os.path.join(BASE_DIR, "models", "gestures", "gesture_model.keras")
 GESTURE_INPUT_SIZE = (64, 64)
-# Hand detection model for locating and cropping hands.
-# HAND_DETECTION_MODEL_PATH = os.path.join(BASE_DIR, "models", "hands", "hand_detector.keras")  # Placeholder path.
 
 #####################
 # Helper function to load and tint an SVG icon.
@@ -168,43 +168,65 @@ class FaceDetectorThread(QThread):
         return mapping.get(idx, "Neutral")
 
 ########################################
-# Hand Gesture Detection Thread (gesture detection disabled for now)
+# Hand Detection Thread (using MediaPipe with landmarks)
 ########################################
-class HandGestureDetectorThread(QThread):
-    # Emits a list for each hand: [x, y, w, h, gesture_prediction]
+class HandDetectorThread(QThread):
+    # Emits a list for each hand:
+    # [x, y, w, h, label, landmarks]
     handsDetected = pyqtSignal(list)
 
     def __init__(self, monitor, parent=None):
         super().__init__(parent)
         self.monitor = monitor
         self.running = True
-        # Gesture model loading is disabled for now.
-        self.gesture_model = None
-        # Hand detection model is also disabled.
-        # self.hand_detector_model = None
-
-    def preprocess_hand(self, hand_img):
-        resized = cv2.resize(hand_img, GESTURE_INPUT_SIZE)
-        img_array = img_to_array(resized) / 255.0
-        return np.expand_dims(img_array, axis=0)
-
-    def detect_hands(self, frame):
-        """
-        Placeholder function for hand localization.
-        Replace with your actual method that returns a list
-        of bounding boxes [x, y, w, h] for each detected hand.
-        For now, return an empty list.
-        """
-        return []  # No hand detected by default.
+        self.mp_hands = mp.solutions.hands
+        # Lower thresholds can improve sensitivity on smaller hands.
+        self.hands = self.mp_hands.Hands(
+            max_num_hands=10,
+            min_detection_confidence=0.3,  
+            min_tracking_confidence=0.3)
+        # Downscale factor to enlarge the hand appearance.
+        self.detection_scale = 0.5
 
     def run(self):
         with mss.mss() as sct:
             while self.running:
                 sct_img = sct.grab(self.monitor)
                 frame = np.array(sct_img)
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
-                # Hand detection is disabled; always emit an empty list.
-                self.handsDetected.emit([])
+                original_height, original_width = frame.shape[:2]
+                # Downscale the frame to make hands appear larger.
+                frame_small = cv2.resize(frame, (0, 0), fx=self.detection_scale, fy=self.detection_scale)
+                rgb_frame = cv2.cvtColor(frame_small, cv2.COLOR_BGRA2RGB)
+                rgb_frame.flags.writeable = False
+                results = self.hands.process(rgb_frame)
+                rgb_frame.flags.writeable = True
+
+                hand_boxes = []
+                if results.multi_hand_landmarks:
+                    small_height, small_width, _ = frame_small.shape
+                    for hand_landmarks in results.multi_hand_landmarks:
+                        # Compute bounding box on the downscaled image.
+                        xs = [landmark.x * small_width for landmark in hand_landmarks.landmark]
+                        ys = [landmark.y * small_height for landmark in hand_landmarks.landmark]
+                        x_min, x_max = int(min(xs)), int(max(xs))
+                        y_min, y_max = int(min(ys)), int(max(ys))
+                        # Scale coordinates back to original.
+                        x_min_orig = int(x_min / self.detection_scale)
+                        y_min_orig = int(y_min / self.detection_scale)
+                        x_max_orig = int(x_max / self.detection_scale)
+                        y_max_orig = int(y_max / self.detection_scale)
+                        w_box_orig = x_max_orig - x_min_orig
+                        h_box_orig = y_max_orig - y_min_orig
+
+                        # Compute landmark positions (scaled back to original frame).
+                        landmarks = []
+                        for landmark in hand_landmarks.landmark:
+                            lx = int(landmark.x * small_width / self.detection_scale)
+                            ly = int(landmark.y * small_height / self.detection_scale)
+                            landmarks.append((lx, ly))
+
+                        hand_boxes.append([x_min_orig, y_min_orig, w_box_orig, h_box_orig, "Hand", landmarks])
+                self.handsDetected.emit(hand_boxes)
                 self.msleep(100)
 
     def stop(self):
@@ -213,18 +235,19 @@ class HandGestureDetectorThread(QThread):
         self.wait()
 
 ########################################
-# Overlay Widget (updated to display face emotion and hand gesture predictions)
+# Overlay Widget (draws face emotion, hand bounding boxes, landmarks, and connecting lines)
 ########################################
 class Overlay(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)
+        # Allow clicks to pass through.
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.showFullScreen()
         # For faces: each element [x, y, w, h, emotion]
         self.faces = []
-        # For hands: each element [x, y, w, h, gesture_prediction]
+        # For hands: each element [x, y, w, h, label, landmarks]
         self.hands = []
         self.show_faces = True
         self.show_hands = True
@@ -239,46 +262,56 @@ class Overlay(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        # Draw face boxes and emotion text.
+        # Draw face detection boxes and emotion text.
         if self.show_faces:
             pen_face = QPen(QColor(0, 255, 0), 3)
             painter.setPen(pen_face)
             for (x, y, w, h, emotion) in self.faces:
-                # Draw the face rectangle.
                 painter.drawRect(x, y, w, h)
-                
-                # Prepare to draw the emotion text with a background.
-                # Determine the text size.
                 font_metrics = painter.fontMetrics()
                 text_rect = font_metrics.boundingRect(emotion)
-                text_padding = 4  # Padding around the text.
-                # Position the background rectangle above the face box.
-                bg_rect = text_rect.adjusted(-text_padding, -text_padding, text_padding, text_padding)
-                bg_rect.moveTo(x, y - bg_rect.height() - 2)  # Slight gap between box and text.
-                
-                # Draw a filled rectangle as background for text.
-                background_color = QColor(0, 0, 0, 180)  # Semi-transparent black.
-                painter.fillRect(bg_rect, background_color)
-                
-                # Draw the emotion text in white.
-                painter.setPen(QColor(255, 255, 255))
-                painter.drawText(bg_rect, Qt.AlignCenter, emotion)
-        # Draw hand boxes and gesture predictions.
-        if self.show_hands:
-            pen_hand = QPen(QColor(255, 0, 0), 3)
-            painter.setPen(pen_hand)
-            for (x, y, w, h, pred) in self.hands:
-                painter.drawRect(x, y, w, h)
-                # Draw hand gesture text with a simple filled rectangle background.
-                font_metrics = painter.fontMetrics()
-                text_rect = font_metrics.boundingRect(str(pred))
                 text_padding = 4
                 bg_rect = text_rect.adjusted(-text_padding, -text_padding, text_padding, text_padding)
                 bg_rect.moveTo(x, y - bg_rect.height() - 2)
-                background_color = QColor(0, 0, 0, 180)
-                painter.fillRect(bg_rect, background_color)
+                painter.fillRect(bg_rect, QColor(0, 0, 0, 180))
                 painter.setPen(QColor(255, 255, 255))
-                painter.drawText(bg_rect, Qt.AlignCenter, str(pred))
+                painter.drawText(bg_rect, Qt.AlignCenter, emotion)
+        # Draw hand detection boxes, labels, landmarks, and connection lines.
+        if self.show_hands:
+            pen_hand = QPen(QColor(255, 0, 0), 3)
+            painter.setPen(pen_hand)
+            for hand in self.hands:
+                # Expect hand to be [x, y, w, h, label, landmarks]
+                if len(hand) >= 6:
+                    x, y, w, h, label, landmarks = hand
+                else:
+                    x, y, w, h, label = hand
+                    landmarks = []
+                painter.drawRect(x, y, w, h)
+                font_metrics = painter.fontMetrics()
+                text_rect = font_metrics.boundingRect(str(label))
+                text_padding = 4
+                bg_rect = text_rect.adjusted(-text_padding, -text_padding, text_padding, text_padding)
+                bg_rect.moveTo(x, y - bg_rect.height() - 2)
+                painter.fillRect(bg_rect, QColor(0, 0, 0, 180))
+                painter.setPen(QColor(255, 255, 255))
+                painter.drawText(bg_rect, Qt.AlignCenter, str(label))
+                # Draw hand landmarks as small unfilled circles.
+                painter.setPen(QPen(QColor(0, 0, 255), 2))
+                painter.setBrush(Qt.NoBrush)
+                for (lx, ly) in landmarks:
+                    radius = 4
+                    painter.drawEllipse(QPoint(lx, ly), radius, radius)
+                # Draw connecting lines using MediaPipe's HAND_CONNECTIONS.
+                connections = mp.solutions.hands.HAND_CONNECTIONS
+                painter.setPen(QPen(QColor(0, 255, 255), 2))
+                if len(landmarks) >= 21:
+                    for connection in connections:
+                        start_idx, end_idx = connection
+                        if start_idx < len(landmarks) and end_idx < len(landmarks):
+                            start_point = QPoint(landmarks[start_idx][0], landmarks[start_idx][1])
+                            end_point = QPoint(landmarks[end_idx][0], landmarks[end_idx][1])
+                            painter.drawLine(start_point, end_point)
 
 ########################################
 # Simplified Toolbar (toggle buttons for faces and hands, plus drag-handle and close)
@@ -396,12 +429,16 @@ class MainApp(QWidget):
         self.toolbar = Toolbar()
         self.toolbar.show()
         self.monitor = monitor
+
         self.faceThread = FaceDetectorThread(self.monitor)
-        self.handThread = HandGestureDetectorThread(self.monitor)
+        self.handThread = HandDetectorThread(self.monitor)
+        
         self.faceThread.facesDetected.connect(self.overlay.updateFaces)
         self.handThread.handsDetected.connect(self.overlay.updateHands)
+        
         self.toolbar.toggleFaceOverlay.connect(self.setFaceOverlay)
         self.toolbar.toggleHandOverlay.connect(self.setHandOverlay)
+        
         self.faceThread.start()
         self.handThread.start()
 
