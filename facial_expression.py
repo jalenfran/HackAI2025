@@ -17,7 +17,7 @@ import seaborn as sns
 import os
 
 # %%
-df = pd.read_csv('/kaggle/input/facialexpressionrecognition/fer2013.csv')
+df = pd.read_csv('assets/fer2013.csv')
 
 # %%
 df.head()
