@@ -67,9 +67,13 @@ model.compile(optimizer='adam',
 model.summary()
 
 # Train model
-EPOCHS = 10
+EPOCHS = 2
 model.fit(train_ds, validation_data=val_ds, epochs=EPOCHS)
+
+# Evaluate model on validation data
+eval_results = model.evaluate(val_ds)
+print("Evaluation results:", eval_results)
 
 # Save the trained model
 model.save(os.path.join(os.getcwd(), 'gesture_model.keras'))
-print("Model saved as gesture_model.h5")
+print("Model saved as gesture_model.keras")
