@@ -3,4 +3,9 @@ app/models/
 fer2013.csv
 .DS_Store
 *.aux
+*.bcf
+*.log
+*.xml
+*.synctex.gz
 facial_gesture.ipynb
+EDA/
