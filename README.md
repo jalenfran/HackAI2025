@@ -18,7 +18,7 @@ This project implements models for American Sign Language and facial expression 
 
 ## Pretrained Models
 
-If you prefer not to train the models from scratch, you can download the pretrained models from [this Google Drive link](https://drive.google.com/drive/folders/pretrained_models_link) and place them in the `app/models` folder as follows:
+If you prefer not to train the models from scratch, you can download the pretrained models from [this Google Drive link](https://drive.google.com/drive/folders/14dh5X6vPgJVFmaTog7rqqcFBgqmL6VDj?usp=sharing) and place them in the `app/models` folder as follows:
 - Place the ASL model (`asl_model.keras`) in `app/models/asl/`
 - Place the gesture model (`gesture_model.keras`) in `app/models/gestures/`
 - Place the facial expression model (`emotion.keras`) in `app/models/emotion/`
