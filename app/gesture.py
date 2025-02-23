@@ -4,6 +4,8 @@ import numpy as np
 import mss
 import mediapipe as mp
 import os
+from rembg import remove
+from PIL import Image
 
 from PyQt5.QtWidgets import QApplication, QWidget, QBoxLayout, QPushButton, QLabel
 from PyQt5.QtGui import QPainter, QPen, QColor, QIcon, QPixmap
@@ -46,17 +48,23 @@ EMOTION_MODEL_PATH = os.path.join(BASE_DIR, "models", "emotion", "emotion.keras"
 EMOTION_INPUT_SIZE = (48, 48)  # Expected input size for the emotion model.
 # Gesture model for hand gestures.
 GESTURE_MODEL_PATH = os.path.join(BASE_DIR, "models", "gestures", "gesture_model.keras")
-GESTURE_INPUT_SIZE = (224, 224)
+GESTURE_INPUT_SIZE = (64, 64)
+
+# Gesture classes for the hand model.
+GESTURE_CLASSES = ['palm', 'l', 'fist', 'fist_moved', 'thumb', 'index', 'ok', 'palm_moved', 'c']
 
 #####################
 # Helper function to load and tint an SVG icon.
 #####################
 def load_svg_icon(path, size, color):
+    # Create a transparent pixmap.
     pixmap = QPixmap(size, size)
     pixmap.fill(Qt.transparent)
+    # Render the SVG onto the pixmap.
     renderer = QSvgRenderer(path)
     painter = QPainter(pixmap)
     renderer.render(painter)
+    # Tint the pixmap.
     painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
     painter.fillRect(pixmap.rect(), QColor(color))
     painter.end()
@@ -76,17 +84,24 @@ def createIconButton(icon_path, fixed_size):
     return btn
 
 #####################
-# Drag Handle Widget (non-clickable)
+# Helper function: process hand region with rembg.
 #####################
-class DragHandle(QLabel):
-    def __init__(self, fixed_size):
-        super().__init__()
-        self.setFixedSize(fixed_size, fixed_size)
-        self.setPixmap(load_svg_icon(DRAG_HANDLE_SVG, fixed_size, ICON_COLOR).pixmap(fixed_size, fixed_size))
-        self.setAlignment(Qt.AlignCenter)
-        self.setStyleSheet("border: none; background: transparent;")
-        # Allow mouse events to pass through so that the parent can handle dragging.
-        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+def process_hand_region_rembg(cropped_region):
+    # Scale down for speed.
+    small = cv2.resize(cropped_region, (256, 256))
+    rgb_small = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
+    pil_small = Image.fromarray(rgb_small)
+    result_pil = remove(pil_small)
+    result_np = np.array(result_pil)
+    if result_np.shape[2] == 4:
+        alpha = result_np[:, :, 3] / 255.0
+        composite = np.empty_like(result_np[:, :, :3], dtype=np.uint8)
+        for c in range(3):
+            composite[:, :, c] = (result_np[:, :, c] * alpha).astype(np.uint8)
+    else:
+        composite = result_np
+    composite_resized = cv2.resize(composite, (cropped_region.shape[1], cropped_region.shape[0]))
+    return composite_resized
 
 ########################################
 # Face & Emotion Detection Thread
@@ -107,6 +122,7 @@ class FaceDetectorThread(QThread):
         self.emotion_model = load_model(EMOTION_MODEL_PATH)
 
     def run(self):
+        import time  # For sleep
         with mss.mss() as sct:
             while self.running:
                 sct_img = sct.grab(self.monitor)
@@ -165,7 +181,7 @@ class FaceDetectorThread(QThread):
         return mapping.get(idx, "Neutral")
 
 ########################################
-# Hand Detection Thread (using MediaPipe with gesture prediction)
+# Hand Detection & Gesture Recognition Thread
 ########################################
 class HandDetectorThread(QThread):
     # Emits a list for each hand:
@@ -185,24 +201,9 @@ class HandDetectorThread(QThread):
         # Downscale factor to enlarge the hand appearance.
         self.detection_scale = 0.5
 
-        # Load the gesture model with the custom object for RandomRotation.
+        # Load the gesture model (Keras) and set gesture classes.
         self.gesture_model = load_model(GESTURE_MODEL_PATH)
-
-    def decode_gesture(self, idx):
-        # Update this mapping based on your gesture model's classes.
-        mapping = {
-            0: 'palm',        # 01_palm
-            1: 'l',           # 02_l
-            2: 'fist',        # 03_fist
-            3: 'fist_moved',  # 04_fist_moved
-            4: 'thumb',       # 05_thumb
-            5: 'index',       # 06_index
-            6: 'ok',          # 07_ok
-            7: 'palm_moved',  # 08_palm_moved
-            8: 'c',           # 09_c
-            9: 'down'         # 10_down
-        }
-        return mapping.get(idx, "Unknown")
+        self.gesture_classes = GESTURE_CLASSES
 
     def run(self):
         with mss.mss() as sct:
@@ -233,19 +234,6 @@ class HandDetectorThread(QThread):
                         y_max_orig = int(y_max / self.detection_scale)
                         w_box_orig = x_max_orig - x_min_orig
                         h_box_orig = y_max_orig - y_min_orig
-                        # Add margin to adjust cropping (e.g., 20% margin).
-                        margin_ratio = 0.2
-                        margin_x = int(margin_ratio * w_box_orig)
-                        margin_y = int(margin_ratio * h_box_orig)
-                        new_x = max(0, x_min_orig - margin_x)
-                        new_y = max(0, y_min_orig - margin_y)
-                        new_w = min(frame.shape[1] - new_x, w_box_orig + 2 * margin_x)
-                        new_h = min(frame.shape[0] - new_y, h_box_orig + 2 * margin_y)
-                        # Clamp the new_x, new_y to frame boundaries:
-                        new_x = max(0, min(new_x, frame.shape[1] - 1))
-                        new_y = max(0, min(new_y, frame.shape[0] - 1))
-                        # Crop the hand region with added margin.
-                        hand_img = frame[new_y:new_y+new_h, new_x:new_x+new_w]
 
                         # Compute landmark positions (scaled back to original frame).
                         landmarks = []
@@ -254,30 +242,36 @@ class HandDetectorThread(QThread):
                             ly = int(landmark.y * small_height / self.detection_scale)
                             landmarks.append((lx, ly))
 
-                        if hand_img.size == 0:
-                            gesture = "Unknown"
-                        else:
-                            try:
-                                if hand_img.shape[-1] == 4:
-                                    hand_img = cv2.cvtColor(hand_img, cv2.COLOR_BGRA2BGR)
-                                # Convert from BGR to RGB
-                                hand_img = cv2.cvtColor(hand_img, cv2.COLOR_BGR2RGB)
-                                # Convert to grayscale and back to RGB to match training pipeline.
-                                gray = cv2.cvtColor(hand_img, cv2.COLOR_RGB2GRAY)
-                                hand_img = cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
-                                # Resize to the expected input size (updated to 224x224).
-                                gesture_img = cv2.resize(hand_img, GESTURE_INPUT_SIZE)
-                                
-                                img_array = img_to_array(gesture_img)
-                                input_img = np.expand_dims(img_array, axis=0)
-                                gesture_preds = self.gesture_model.predict(input_img)
-                                gesture_idx = np.argmax(gesture_preds, axis=1)[0]
-                                gesture = self.decode_gesture(gesture_idx)
-                            except Exception as e:
-                                gesture = "Error"
+                        # Crop the hand region from the original frame.
+                        margin = 20
+                        x_min_crop = max(0, x_min_orig - margin)
+                        y_min_crop = max(0, y_min_orig - margin)
+                        x_max_crop = min(original_width, x_max_orig + margin)
+                        y_max_crop = min(original_height, y_max_orig + margin)
+                        hand_img = frame[y_min_crop:y_max_crop, x_min_crop:x_max_crop]
 
-                        # Append the hand box with updated label.
-                        hand_boxes.append([x_min_orig, y_min_orig, w_box_orig, h_box_orig, f"Hand - {gesture}", landmarks])
+                        # Process hand image: background removal, grayscale, and resize.
+                        processed_hand = process_hand_region_rembg(hand_img)
+                        gray_hand = cv2.cvtColor(processed_hand, cv2.COLOR_BGR2GRAY)
+                        pil_img = Image.fromarray(gray_hand)
+                        pil_img_resized = pil_img.resize(GESTURE_INPUT_SIZE)
+
+                        # Prepare input for the gesture model.
+                        input_img = np.array(pil_img_resized)
+                        if input_img.ndim == 2:
+                            input_img = input_img[..., np.newaxis]
+                        input_img = input_img.astype("float32") / 255.0
+                        input_img = np.expand_dims(input_img, axis=0)
+
+                        try:
+                            preds = self.gesture_model.predict(input_img)
+                            gesture_index = np.argmax(preds, axis=1)[0]
+                            gesture_label = f"Hand - {self.gesture_classes[gesture_index]}"
+                        except Exception as e:
+                            print("Gesture model prediction error:", e)
+                            gesture_label = "Hand - Unknown"
+
+                        hand_boxes.append([x_min_orig, y_min_orig, w_box_orig, h_box_orig, gesture_label, landmarks])
                 self.handsDetected.emit(hand_boxes)
                 self.msleep(100)
 
@@ -470,6 +464,19 @@ class Toolbar(QWidget):
             total_width = self.buttonSize + margins.left() + margins.right()
             total_height = count * self.buttonSize + (count - 1) * spacing + margins.top() + margins.bottom()
             self.setFixedSize(total_width, total_height)
+
+########################################
+# Drag Handle Widget (non-clickable)
+########################################
+class DragHandle(QLabel):
+    def __init__(self, fixed_size):
+        super().__init__()
+        self.setFixedSize(fixed_size, fixed_size)
+        self.setPixmap(load_svg_icon(DRAG_HANDLE_SVG, fixed_size, ICON_COLOR).pixmap(fixed_size, fixed_size))
+        self.setAlignment(Qt.AlignCenter)
+        self.setStyleSheet("border: none; background: transparent;")
+        # Allow mouse events to pass through so that the parent can handle dragging.
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
 
 ########################################
 # Main Application
