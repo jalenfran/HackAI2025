@@ -46,7 +46,7 @@ EMOTION_MODEL_PATH = os.path.join(BASE_DIR, "models", "emotion", "emotion.keras"
 EMOTION_INPUT_SIZE = (48, 48)  # Expected input size for the emotion model.
 # Gesture model for hand gestures.
 GESTURE_MODEL_PATH = os.path.join(BASE_DIR, "models", "gestures", "gesture_model.keras")
-GESTURE_INPUT_SIZE = (64, 64)
+GESTURE_INPUT_SIZE = (224, 224)
 
 #####################
 # Helper function to load and tint an SVG icon.
@@ -191,11 +191,16 @@ class HandDetectorThread(QThread):
     def decode_gesture(self, idx):
         # Update this mapping based on your gesture model's classes.
         mapping = {
-            0: "Fist",
-            1: "Palm",
-            2: "Victory",
-            3: "OK",
-            4: "Thumbs Up"
+            0: 'palm',        # 01_palm
+            1: 'l',           # 02_l
+            2: 'fist',        # 03_fist
+            3: 'fist_moved',  # 04_fist_moved
+            4: 'thumb',       # 05_thumb
+            5: 'index',       # 06_index
+            6: 'ok',          # 07_ok
+            7: 'palm_moved',  # 08_palm_moved
+            8: 'c',           # 09_c
+            9: 'down'         # 10_down
         }
         return mapping.get(idx, "Unknown")
 
@@ -228,6 +233,19 @@ class HandDetectorThread(QThread):
                         y_max_orig = int(y_max / self.detection_scale)
                         w_box_orig = x_max_orig - x_min_orig
                         h_box_orig = y_max_orig - y_min_orig
+                        # Add margin to adjust cropping (e.g., 20% margin).
+                        margin_ratio = 0.2
+                        margin_x = int(margin_ratio * w_box_orig)
+                        margin_y = int(margin_ratio * h_box_orig)
+                        new_x = max(0, x_min_orig - margin_x)
+                        new_y = max(0, y_min_orig - margin_y)
+                        new_w = min(frame.shape[1] - new_x, w_box_orig + 2 * margin_x)
+                        new_h = min(frame.shape[0] - new_y, h_box_orig + 2 * margin_y)
+                        # Clamp the new_x, new_y to frame boundaries:
+                        new_x = max(0, min(new_x, frame.shape[1] - 1))
+                        new_y = max(0, min(new_y, frame.shape[0] - 1))
+                        # Crop the hand region with added margin.
+                        hand_img = frame[new_y:new_y+new_h, new_x:new_x+new_w]
 
                         # Compute landmark positions (scaled back to original frame).
                         landmarks = []
@@ -236,15 +254,21 @@ class HandDetectorThread(QThread):
                             ly = int(landmark.y * small_height / self.detection_scale)
                             landmarks.append((lx, ly))
 
-                        # Crop the hand region from the original frame.
-                        hand_img = frame[y_min_orig:y_min_orig+h_box_orig, x_min_orig:x_min_orig+w_box_orig]
-                        # If the region is valid, run gesture prediction.
                         if hand_img.size == 0:
                             gesture = "Unknown"
                         else:
                             try:
+                                if hand_img.shape[-1] == 4:
+                                    hand_img = cv2.cvtColor(hand_img, cv2.COLOR_BGRA2BGR)
+                                # Convert from BGR to RGB
+                                hand_img = cv2.cvtColor(hand_img, cv2.COLOR_BGR2RGB)
+                                # Convert to grayscale and back to RGB to match training pipeline.
+                                gray = cv2.cvtColor(hand_img, cv2.COLOR_RGB2GRAY)
+                                hand_img = cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
+                                # Resize to the expected input size (updated to 224x224).
                                 gesture_img = cv2.resize(hand_img, GESTURE_INPUT_SIZE)
-                                img_array = img_to_array(gesture_img) / 255.0
+                                
+                                img_array = img_to_array(gesture_img)
                                 input_img = np.expand_dims(img_array, axis=0)
                                 gesture_preds = self.gesture_model.predict(input_img)
                                 gesture_idx = np.argmax(gesture_preds, axis=1)[0]
