@@ -26,7 +26,7 @@ GESTURE_MAP = {
 }
 
 # Load dataset (placeholder)
-train_ds = keras.preprocessing.image_dataset_from_directory(
+train_ds = keras.preprocessing.image_dataset_from_directory (
     DATA_DIR,
     validation_split=0.2,
     subset="training",
