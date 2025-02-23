@@ -2383,12 +2383,6 @@
     <bcf:datasource type="file" datatype="bibtex" glob="false">sample.bib</bcf:datasource>
   </bcf:bibdata>
   <bcf:section number="0">
-    <bcf:citekey order="1" intorder="1">Cui1</bcf:citekey>
-    <bcf:citekey order="2" intorder="1">Cui1</bcf:citekey>
-    <bcf:citekey order="2" intorder="2">Ninomiya1</bcf:citekey>
-    <bcf:citekey order="2" intorder="3">Li1</bcf:citekey>
-    <bcf:citekey order="2" intorder="4">Wang1</bcf:citekey>
-    <bcf:citekey order="2" intorder="5">Yang1</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">
