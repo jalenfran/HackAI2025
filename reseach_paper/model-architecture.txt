@@ -1,0 +1,162 @@
+Here is a quick explanation of the architecture of each model
+
+Facial Expression Model -- More complex model
+
+Input Layer
+- Input Shape: (48, 48, 1) for grayscale images.
+
+Convolutional Blocks
+
+Block 1:
+- Conv2D (32 filters, 3x3 kernel, ReLU activation, same padding): Extracts low-level features.
+- BatchNormalization: Normalizes activations.
+- Conv2D (32 filters, 3x3 kernel, ReLU activation, same padding): Refines features.
+- BatchNormalization: Normalizes activations.
+- MaxPooling2D (2x2 pool size): Reduces spatial dimensions.
+- Dropout (0.25): Prevents overfitting.
+
+Block 2:
+- Conv2D (64 filters, 3x3 kernel, ReLU activation, same padding): Extracts more complex features.
+- BatchNormalization: Normalizes activations.
+- Conv2D (64 filters, 3x3 kernel, ReLU activation, same padding): Refines features.
+- BatchNormalization: Normalizes activations.
+- MaxPooling2D (2x2 pool size): Reduces spatial dimensions.
+- Dropout (0.35): Prevents overfitting.
+
+Block 3:
+- Conv2D (128 filters, 3x3 kernel, ReLU activation, same padding): Extracts even more complex features.
+- BatchNormalization: Normalizes activations.
+- Conv2D (128 filters, 3x3 kernel, ReLU activation, same padding): Refines features.
+- BatchNormalization: Normalizes activations.
+- MaxPooling2D (2x2 pool size): Reduces spatial dimensions.
+- Dropout (0.5): Prevents overfitting.
+
+Block 4:
+- Conv2D (512 filters, 3x3 kernel, ReLU activation, same padding): Extracts high-level features.
+- BatchNormalization: Normalizes activations.
+- Dropout (0.5): Prevents overfitting.
+
+Global Pooling and Dense Layers
+- GlobalAveragePooling2D: Reduces each feature map to a single value.
+- Dense (64 units, ReLU activation): Adds a fully connected layer.
+- BatchNormalization: Normalizes activations.
+- Dropout (0.5): Prevents overfitting.
+- Dense (7 units, softmax activation): Output layer for emotion classification.
+
+Compilation
+- Loss Function: categorical_crossentropy.
+- Optimizer: Adam with a learning rate of 0.001.
+- Metrics: accuracy.
+
+Data Augmentation
+- ImageDataGenerator: Applies random transformations to improve generalization.
+- Callbacks
+- EarlyStopping: Stops training if validation loss does not improve.
+- ReduceLROnPlateau: Reduces learning rate if validation loss plateaus.
+
+Gesture Model
+
+Input Layer
+- Input Shape: (64, 64, 1) for grayscale images.
+
+Convolutional Blocks
+Block 1:
+- Conv2D (32 filters, 3x3 kernel, ReLU activation, same padding): Extracts low-level features.
+- BatchNormalization: Normalizes activations.
+- Conv2D (32 filters, 3x3 kernel, ReLU activation, same padding): Refines features.
+- BatchNormalization: Normalizes activations.
+- MaxPooling2D (2x2 pool size): Reduces spatial dimensions.
+- Dropout (0.25): Prevents overfitting
+
+Block 2:
+- Conv2D (64 filters, 3x3 kernel, ReLU activation, same padding): Extracts more complex features.
+- BatchNormalization: Normalizes activations.
+- Conv2D (64 filters, 3x3 kernel, ReLU activation, same padding): Refines features.
+- BatchNormalization: Normalizes activations.
+- MaxPooling2D (2x2 pool size): Reduces spatial dimensions.
+- Dropout (0.35): Prevents overfitting.
+
+Block 3:
+- Conv2D (128 filters, 3x3 kernel, ReLU activation, same padding): Extracts even more complex features.
+- BatchNormalization: Normalizes activations.
+- Conv2D (128 filters, 3x3 kernel, ReLU activation, same padding): Refines features.
+- BatchNormalization: Normalizes activations.
+- MaxPooling2D (2x2 pool size): Reduces spatial dimensions.
+- Dropout (0.5): Prevents overfitting.
+
+Block 4:
+- Conv2D (256 filters, 3x3 kernel, ReLU activation, same padding): Extracts high-level features.
+- BatchNormalization: Normalizes activations.
+- Dropout (0.5): Prevents overfitting.
+
+Global Pooling and Dense Layers
+- GlobalAveragePooling2D: Reduces each feature map to a single value.
+- Dense (128 units, ReLU activation): Adds a fully connected layer.
+- BatchNormalization: Normalizes activations.
+- Dropout (0.5): Prevents overfitting.
+- Dense (number of gesture classes, softmax activation): Output layer for gesture classification.
+
+Compilation
+- Loss Function: categorical_crossentropy.
+- Optimizer: Adam with a learning rate of 0.001.
+- Metrics: accuracy.
+- Data Augmentation
+- ImageDataGenerator: Applies random transformations to improve generalization.
+
+Callbacks
+- EarlyStopping: Stops training if validation loss does not improve.
+- ReduceLROnPlateau: Reduces learning rate if validation loss plateaus.
+
+WLASL Model
+
+Input Layer
+- Input Shape: (64, 64, 1) for grayscale images.
+
+Convolutional Blocks
+
+Block 1:
+- Conv2D (32 filters, 3x3 kernel, ReLU activation, same padding): Extracts low-level features.
+- BatchNormalization: Normalizes activations.
+- Conv2D (32 filters, 3x3 kernel, ReLU activation, same padding): Refines features.
+- BatchNormalization: Normalizes activations.
+- MaxPooling2D (2x2 pool size): Reduces spatial dimensions.
+- Dropout (0.25): Prevents overfitting.
+
+Block 2:
+- Conv2D (64 filters, 3x3 kernel, ReLU activation, same padding): Extracts more complex features.
+- BatchNormalization: Normalizes activations.
+- Conv2D (64 filters, 3x3 kernel, ReLU activation, same padding): Refines features.
+- BatchNormalization: Normalizes activations.
+- MaxPooling2D (2x2 pool size): Reduces spatial dimensions.
+- Dropout (0.35): Prevents overfitting
+
+Block 3:
+- Conv2D (128 filters, 3x3 kernel, ReLU activation, same padding): Extracts even more complex features.
+- BatchNormalization: Normalizes activations.
+- Conv2D (128 filters, 3x3 kernel, ReLU activation, same padding): Refines features.
+- BatchNormalization: Normalizes activations.
+- MaxPooling2D (2x2 pool size): Reduces spatial dimensions.
+- Dropout (0.5): Prevents overfitting.
+
+Block 4:
+- Conv2D (256 filters, 3x3 kernel, ReLU activation, same padding): Extracts high-level features.
+- BatchNormalization: Normalizes activations.
+- Dropout (0.5): Prevents overfitting.
+
+Global Pooling and Dense Layers
+- GlobalAveragePooling2D: Reduces each feature map to a single value.
+- Dense (128 units, ReLU activation): Adds a fully connected layer.
+- BatchNormalization: Normalizes activations.
+- Dropout (0.5): Prevents overfitting.
+- Dense (number of gesture classes, softmax activation): Output layer for gesture classification.
+
+Compilation
+- Loss Function: categorical_crossentropy.
+- Optimizer: Adam with a learning rate of 0.001.
+- Metrics: accuracy.
+- Data Augmentation
+- ImageDataGenerator: Applies random transformations to improve generalization.
+
+Callbacks
+- EarlyStopping: Stops training if validation loss does not improve.
+- ReduceLROnPlateau: Reduces learning rate if validation loss plateaus.

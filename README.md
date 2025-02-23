@@ -48,34 +48,49 @@ If you prefer not to train the models from scratch, you can download the pretrai
   python app/main.py
   ```
 
-  -- main.py handles emotions
-  -- gesture.py handles gestures
-  -- hands_no_gesture handles hands and emotions
+### Application Components
+
+#### main.py
+- Focuses on facial expression recognition
+- Uses OpenCV DNN for face detection
+- Processes emotions using Keras model (48x48 grayscale input)
+- Shows emotion labels above detected faces
+- Provides toggleable overlay interface
+
+#### gesture.py (Primary Application)
+- Complete detection suite combining:
+  - Hand gesture recognition (128x128 grayscale)
+  - ASL detection with text output
+  - Facial emotion recognition
+- Features:
+  - Background removal for improved hand detection
+  - Real-time gesture classification
+  - MediaPipe hand landmark visualization
+  - Draggable toolbar with snap-to-edge
+  - Toggle controls for face/hand detection
+
+#### hands_no_gesture.py
+- Simplified version focusing on:
+  - Basic hand detection using MediaPipe
+  - Face detection and emotion recognition
+  - Hand landmark visualization
+- Useful for debugging or when gesture recognition isn't needed
 
 ## Project Structure
 
 ```
-/Users/jalenfrancis/HackAI2025-1/
-├── app/
-│   ├── main.py
-│   ├── gesture.py
-│   ├── hands_no_gesture.py
-├──── models/
-│    ├── face/
-│    ├── emotion/
-│    ├── gestures/
-│    └── asl/ 
-├── assets/
-│   └── (icons and other image assets)
-├── data/
-│   ├── asl_dataset/
-│   ├── leapGestRecog/
-│   └── fer2013.csv
-├── requirements.txt
-├── README.md
-├── wlasl_model.py
-├── gesture_classifier.py
-└── facial_expression.py
+HackAI2025/
+├───app/
+│   ├───assets/          # UI icons and images
+│   └───models/          # Trained models
+│       ├───asl/         # ASL recognition model
+│       ├───emotion/     # Facial expression model
+│       ├───face/        # Face detection model
+│       └───gestures/    # Hand gesture model
+├───figures/            # Generated plots & diagrams
+├───model_builders/     # Model training scripts
+├───research_paper/     # Documentation
+└───requirements.txt    # Dependencies
 ```
 
 ## Notes

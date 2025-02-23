@@ -48,10 +48,10 @@ EMOTION_MODEL_PATH = os.path.join(BASE_DIR, "models", "emotion", "emotion.keras"
 EMOTION_INPUT_SIZE = (48, 48)  # Expected input size for the emotion model.
 # Gesture model for hand gestures.
 GESTURE_MODEL_PATH = os.path.join(BASE_DIR, "models", "gestures", "gesture_model.keras")
-GESTURE_INPUT_SIZE = (64, 64)
+GESTURE_INPUT_SIZE = (128, 128)
 
 # Gesture classes for the hand model.
-GESTURE_CLASSES = ['palm', 'l', 'fist', 'fist_moved', 'thumb', 'index', 'ok', 'palm_moved', 'c']
+GESTURE_CLASSES = ['palm', 'l', 'fist', 'fist_moved', 'thumb', 'index', 'ok', 'palm_moved', 'c', 'down']
 
 #####################
 # Helper function to load and tint an SVG icon.

@@ -149,10 +149,15 @@ def main():
     print(f"Test loss: {test_loss}")
     print(f"Test accuracy: {test_accuracy}")
 
-    # Save the retrained model in TensorFlow's SavedModel format to avoid InputLayer issues.
-    model_save_path = os.path.join("models", "emotion", "emotion_retrained")
+    # Update save path to go up one directory then into app/models/emotion
+    parent_dir = os.path.dirname(BASE_DIR)  # Go up one level from model_builders
+    model_save_path = os.path.join(parent_dir, "app", "models", "emotion", "emotion.keras")
+    
+    # Create directories if they don't exist
+    os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
+    
     model.save(model_save_path)
-    print(f"Retrained model saved to {model_save_path}")
+    print(f"Model saved to: {model_save_path}")
 
 if __name__ == '__main__':
     main()
