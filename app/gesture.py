@@ -14,16 +14,6 @@ from PyQt5.QtSvg import QSvgRenderer
 from tensorflow.keras.models import load_model  # type: ignore
 from tensorflow.keras.preprocessing.image import img_to_array  # type: ignore
 
-# --- Custom layer to fix deserialization issues ---
-from tensorflow.keras.layers import RandomRotation as KerasRandomRotation
-
-class CustomRandomRotation(KerasRandomRotation):
-    @classmethod
-    def from_config(cls, config):
-        # Remove the unsupported 'value_range' keyword if present.
-        config.pop("value_range", None)
-        return super().from_config(config)
-
 #####################
 # Constants
 #####################
@@ -196,7 +186,7 @@ class HandDetectorThread(QThread):
         self.detection_scale = 0.5
 
         # Load the gesture model with the custom object for RandomRotation.
-        self.gesture_model = load_model(GESTURE_MODEL_PATH, custom_objects={'RandomRotation': CustomRandomRotation})
+        self.gesture_model = load_model(GESTURE_MODEL_PATH)
 
     def decode_gesture(self, idx):
         # Update this mapping based on your gesture model's classes.

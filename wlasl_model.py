@@ -3,16 +3,18 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.preprocessing import image_dataset_from_directory
 import json
+import os
 
-# Define dataset path
-data_dir = "data/asl_dataset"
+# Define BASE_DIR and dataset path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data", "asl_dataset")
 
 # Load dataset with 80% training, 10% validation, 10% test
 batch_size = 32
 img_size = (64, 64)
 
 train_ds = image_dataset_from_directory(
-    data_dir,
+    DATA_DIR,
     validation_split=0.2,
     subset="training",
     seed=123,
@@ -20,12 +22,13 @@ train_ds = image_dataset_from_directory(
     batch_size=batch_size
 )
 
-# Save class names for later use in test.py
-with open("asl_class_names.json", "w") as f:
+# Save class names using BASE_DIR
+class_names_path = os.path.join(BASE_DIR, "asl_class_names.json")
+with open(class_names_path, "w") as f:
     json.dump(train_ds.class_names, f)
 
 val_ds = image_dataset_from_directory(
-    data_dir,
+    DATA_DIR,
     validation_split=0.1,
     subset="validation",
     seed=123,
@@ -34,7 +37,7 @@ val_ds = image_dataset_from_directory(
 )
 
 test_ds = image_dataset_from_directory(
-    data_dir,
+    DATA_DIR,
     validation_split=0.1,
     subset="validation",
     seed=456,
@@ -71,5 +74,6 @@ model.fit(train_ds, validation_data=val_ds, epochs=epochs)
 # Evaluate model
 model.evaluate(test_ds)
 
-# Save model
-model.save("asl_model.keras")
+# Save model using BASE_DIR to build a cross-platform path
+model_save_path = os.path.join(BASE_DIR, "app", "models", "asl", "asl_model.keras")
+model.save(model_save_path)

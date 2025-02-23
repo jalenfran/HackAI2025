@@ -48,6 +48,10 @@ If you prefer not to train the models from scratch, you can download the pretrai
   python app/main.py
   ```
 
+  -- main.py handles emotions
+  -- gesture.py handles gestures
+  -- hands_no_gesture handles hands and emotions
+
 ## Project Structure
 
 ```

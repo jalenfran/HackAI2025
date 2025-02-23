@@ -16,8 +16,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
+# Update CSV path using os.path.join
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # %%
-df = pd.read_csv('data/fer2013.csv')
+df = pd.read_csv(os.path.join(BASE_DIR, "data", "fer2013.csv"))
 
 # %%
 df.head()
@@ -146,7 +149,10 @@ def main():
     print(f"Test loss: {test_loss}")
     print(f"Test accuracy: {test_accuracy}")
 
-    model.save('app/models/emotion/emotion.keras')
+    # Save the retrained model in TensorFlow's SavedModel format to avoid InputLayer issues.
+    model_save_path = os.path.join("models", "emotion", "emotion_retrained")
+    model.save(model_save_path)
+    print(f"Retrained model saved to {model_save_path}")
 
 if __name__ == '__main__':
     main()
