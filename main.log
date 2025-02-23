@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2025.2.23)  23 FEB 2025 00:19
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2025.2.23)  23 FEB 2025 00:20
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -536,4 +536,94 @@ LaTeX Warning: Citation 'Cui1' on page 1 undefined on input line 76.
 LaTeX Warning: Citation 'Cui1' on page 1 undefined on input line 76.
 
 
-LaTeX Warning: Citation 'Ninomiya1' on page 
+LaTeX Warning: Citation 'Ninomiya1' on page 1 undefined on input line 76.
+
+
+LaTeX Warning: Citation 'Li1' on page 1 undefined on input line 76.
+
+
+LaTeX Warning: Citation 'Wang1' on page 1 undefined on input line 76.
+
+
+LaTeX Warning: Citation 'Yang1' on page 1 undefined on input line 76.
+
+
+
+[1
+
+{C:/Users/Farhan/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}]
+LaTeX Font Info:    Trying to load font information for OMS+cmr on input line 82.
+ (C:\Users\Farhan\AppData\Local\Programs\MiKTeX\tex/latex/base\omscmr.fd
+File: omscmr.fd 2024/11/19 v2.5n Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 82.
+
+Overfull \hbox (18.82527pt too wide) in paragraph at lines 82--83
+\OT1/cmr/m/n/10 bered con-sec-u-tively, in round brack-ets, on the right-hand side of the page by us-ing the ``\OMS/cmsy/m/n/10 n\OT1/cmr/m/n/10 begin\OMS/cmsy/m/n/10 f\OT1/cmr/m/n/10 equation\OMS/cmsy/m/n/10 g\OT1/cmr/m/n/10 ''
+ []
+
+<./figures/fig 1.png, id=16, 315.42844pt x 315.42844pt>
+File: ./figures/fig 1.png Graphic file (type png)
+<use ./figures/fig 1.png>
+Package pdftex.def Info: ./figures/fig 1.png  used on input line 100.
+(pdftex.def)             Requested size: 216.81pt x 216.81319pt.
+
+
+[2 <./figures/fig 1.png>]
+File: ./figures/fig 1.png Graphic file (type png)
+<use ./figures/fig 1.png>
+Package pdftex.def Info: ./figures/fig 1.png  used on input line 115.
+(pdftex.def)             Requested size: 156.10146pt x 144.54051pt.
+<./figures/fig 2.png, id=24, 448.67625pt x 448.67625pt>
+File: ./figures/fig 2.png Graphic file (type png)
+<use ./figures/fig 2.png>
+Package pdftex.def Info: ./figures/fig 2.png  used on input line 119.
+(pdftex.def)             Requested size: 156.09425pt x 144.5378pt.
+
+
+[3 <./figures/fig 2.png>]
+
+[4]
+
+[5]
+
+[6]
+
+LaTeX Warning: Empty bibliography on input line 243.
+
+
+
+[7] (main.aux)
+ ***********
+LaTeX2e <2024-11-01> patch level 2
+L3 programming layer <2025-01-18>
+ ***********
+
+
+LaTeX Warning: There were undefined references.
+
+
+Package biblatex Warning: Please (re)run Biber on the file:
+(biblatex)                main
+(biblatex)                and rerun LaTeX afterwards.
+
+Package logreq Info: Writing requests to 'main.run.xml'.
+\openout1 = `main.run.xml'.
+
+ ) 
+Here is how much of TeX's memory you used:
+ 12763 strings out of 473530
+ 240105 string characters out of 5714310
+ 1062410 words of memory out of 5000000
+ 35875 multiletter control sequences out of 15000+600000
+ 566638 words of font info for 63 fonts, out of 8000000 for 9000
+ 1141 hyphenation exceptions out of 8191
+ 67i,15n,81p,915b,1165s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ <C:\Users\Farhan\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1000.pk> <C:\Users\Farhan\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm0900.pk><C:/Users/Farhan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Users/Farhan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Users/Farhan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx9.pfb><C:/Users/Farhan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/Farhan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/Farhan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/Farhan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/Farhan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr7.pfb><C:/Users/Farhan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/Farhan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr9.pfb><C:/Users/Farhan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmss8.pfb><C:/Users/Farhan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/Farhan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb>
+Output written on main.pdf (7 pages, 192100 bytes).
+PDF statistics:
+ 105 PDF objects out of 1000 (max. 8388607)
+ 0 named destinations out of 1000 (max. 500000)
+ 11 words of extra memory for PDF output out of 10000 (max. 10000000)
+
