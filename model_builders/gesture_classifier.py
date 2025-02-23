@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 
 # Define parameters
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATASET_PATH = os.path.join("data", "leapGestRecog")
 IMG_SIZE = (128, 128)  # Modified
 BATCH_SIZE = 32

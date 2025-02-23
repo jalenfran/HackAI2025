@@ -57,7 +57,7 @@ Data Augmentation
 Gesture Model
 
 Input Layer
-- Input Shape: (64, 64, 1) for grayscale images.
+- Input Shape: (128, 128, 1) for grayscale images.
 
 Convolutional Blocks
 Block 1:
@@ -110,7 +110,7 @@ Callbacks
 WLASL Model
 
 Input Layer
-- Input Shape: (64, 64, 1) for grayscale images.
+- Input Shape: (128, 128, 1) for grayscale images.
 
 Convolutional Blocks
 

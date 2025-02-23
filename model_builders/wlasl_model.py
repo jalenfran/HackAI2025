@@ -3,14 +3,13 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.preprocessing import image_dataset_from_directory
 import matplotlib.pyplot as plt
-import json
 import os
 
-# Define BASE_DIR and dataset path
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Fix BASE_DIR to point to project root
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data", "asl_dataset")
 
-# Load dataset with 80% training, 10% validation, 10% test
+# Load dataset with grayscale images
 batch_size = 32
 img_size = (128, 128)
 
@@ -20,13 +19,9 @@ train_ds = image_dataset_from_directory(
     subset="training",
     seed=123,
     image_size=img_size,
-    batch_size=batch_size
+    batch_size=batch_size,
+    color_mode='grayscale'  # Changed to grayscale
 )
-
-# Save class names using BASE_DIR
-class_names_path = os.path.join(BASE_DIR, "asl_class_names.json")
-with open(class_names_path, "w") as f:
-    json.dump(train_ds.class_names, f)
 
 val_ds = image_dataset_from_directory(
     DATA_DIR,
@@ -34,7 +29,8 @@ val_ds = image_dataset_from_directory(
     subset="validation",
     seed=123,
     image_size=img_size,
-    batch_size=batch_size
+    batch_size=batch_size,
+    color_mode='grayscale'  # Changed to grayscale
 )
 
 test_ds = image_dataset_from_directory(
@@ -43,13 +39,13 @@ test_ds = image_dataset_from_directory(
     subset="validation",
     seed=456,
     image_size=img_size,
-    batch_size=batch_size
+    batch_size=batch_size,
+    color_mode='grayscale'  # Changed to grayscale
 )
 
-# Define the CNN model
+# Define the CNN model with single channel input - removed rescaling layer
 model = keras.Sequential([
-    layers.Rescaling(1./255, input_shape=(128, 128, 3)),  # Modified input shape
-    layers.Conv2D(32, (3, 3), activation='relu'),
+    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(128, 128, 1)),
     layers.MaxPooling2D((2, 2)),
     layers.Conv2D(64, (3, 3), activation='relu'),
     layers.MaxPooling2D((2, 2)),
@@ -83,6 +79,7 @@ plt.xlabel('Epochs')
 plt.legend(['train', 'test'])
 plt.show()
 
-# Save model using BASE_DIR to build a cross-platform path
+# Save model to correct path relative to project root
 model_save_path = os.path.join(BASE_DIR, "app", "models", "asl", "asl_model.keras")
 model.save(model_save_path)
+print(f"Model saved to: {model_save_path}")

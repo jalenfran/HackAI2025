@@ -49,9 +49,13 @@ EMOTION_INPUT_SIZE = (48, 48)  # Expected input size for the emotion model.
 # Gesture model for hand gestures.
 GESTURE_MODEL_PATH = os.path.join(BASE_DIR, "models", "gestures", "gesture_model.keras")
 GESTURE_INPUT_SIZE = (128, 128)
+# Gesture model for hand gestures.
+WLASL_MODEL_PATH = os.path.join(BASE_DIR, "models", "asl", "asl_model.keras")
+WLASL_INPUT_SIZE = (128, 128)
 
 # Gesture classes for the hand model.
 GESTURE_CLASSES = ['palm', 'l', 'fist', 'fist_moved', 'thumb', 'index', 'ok', 'palm_moved', 'c', 'down']
+WLASL_CLASSES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
 #####################
 # Helper function to load and tint an SVG icon.
@@ -205,6 +209,10 @@ class HandDetectorThread(QThread):
         self.gesture_model = load_model(GESTURE_MODEL_PATH)
         self.gesture_classes = GESTURE_CLASSES
 
+        # Load the ASL model (Keras) and set gesture classes.
+        self.asl_model = load_model(WLASL_MODEL_PATH)
+        self.asl_model_classes = WLASL_CLASSES
+
     def run(self):
         with mss.mss() as sct:
             while self.running:
@@ -264,14 +272,24 @@ class HandDetectorThread(QThread):
                         input_img = np.expand_dims(input_img, axis=0)
 
                         try:
-                            preds = self.gesture_model.predict(input_img)
-                            gesture_index = np.argmax(preds, axis=1)[0]
-                            gesture_label = f"Hand - {self.gesture_classes[gesture_index]}"
+                            # Use the same preprocessed input for both models
+                            gesture_preds = self.gesture_model.predict(input_img)
+                            gesture_index = np.argmax(gesture_preds, axis=1)[0]
+                            gesture_name = self.gesture_classes[gesture_index]
+                            
+                            # Also predict with ASL model using same input
+                            asl_preds = self.asl_model.predict(input_img)
+                            asl_index = np.argmax(asl_preds, axis=1)[0]
+                            asl_name = self.asl_model_classes[asl_index]
+                            
+                            # Combine predictions into one label
+                            combined_label = f"Gesture: {gesture_name} | ASL: {asl_name}"
+                            
                         except Exception as e:
-                            print("Gesture model prediction error:", e)
-                            gesture_label = "Hand - Unknown"
+                            print("Model prediction error:", e)
+                            combined_label = "Hand - Unknown"
 
-                        hand_boxes.append([x_min_orig, y_min_orig, w_box_orig, h_box_orig, gesture_label, landmarks])
+                        hand_boxes.append([x_min_orig, y_min_orig, w_box_orig, h_box_orig, combined_label, landmarks])
                 self.handsDetected.emit(hand_boxes)
                 self.msleep(100)
 
