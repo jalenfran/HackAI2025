@@ -5,7 +5,7 @@ import os
 BATCH_SIZE = 32
 IMG_SIZE = (224, 224)
 NUM_CLASSES = 10
-DATA_DIR = os.path.join(os.getcwd(), 'assets/leapGestRecog')
+DATA_DIR = os.path.join(os.getcwd(), 'data/leapGestRecog')
 GESTURE_MAP = {
     0: 'palm',        # 01_palm
     1: 'l',           # 02_l
@@ -83,5 +83,5 @@ model.fit(train_ds,
           callbacks=[es, rlrop])
 
 # Save the trained model
-model.save(os.path.join(os.getcwd(), 'gesture_model.keras'))
+model.save(os.path.join(os.getcwd(), 'app/models/gestures/gesture_model.keras'), include_optimizer = False)
 print("Model saved as gesture_model.keras")

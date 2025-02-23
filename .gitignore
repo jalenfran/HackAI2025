@@ -1,2 +1,4 @@
-assets/leapGestRecog
+data/
+app/models/
 fer2013.csv
+.DS_Store

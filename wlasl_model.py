@@ -5,7 +5,7 @@ from tensorflow.keras.preprocessing import image_dataset_from_directory
 import json
 
 # Define dataset path
-data_dir = "asl_dataset"
+data_dir = "data/asl_dataset"
 
 # Load dataset with 80% training, 10% validation, 10% test
 batch_size = 32

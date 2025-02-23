@@ -17,7 +17,7 @@ import seaborn as sns
 import os
 
 # %%
-df = pd.read_csv('assets/fer2013.csv')
+df = pd.read_csv('data/fer2013.csv')
 
 # %%
 df.head()
@@ -146,7 +146,7 @@ def main():
     print(f"Test loss: {test_loss}")
     print(f"Test accuracy: {test_accuracy}")
 
-    model.save('facial_expression.keras')
+    model.save('app/models/emotion/emotion.keras')
 
 if __name__ == '__main__':
     main()
