@@ -4,12 +4,13 @@ from tensorflow.keras import layers
 from tensorflow.keras.preprocessing import image_dataset_from_directory
 import matplotlib.pyplot as plt
 import os
+import numpy as np
 
 # Fix BASE_DIR to point to project root
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data", "asl_dataset")
 
-# Load dataset with grayscale images
+# Load datasets with correct splits
 batch_size = 32
 img_size = (128, 128)
 
@@ -20,28 +21,42 @@ train_ds = image_dataset_from_directory(
     seed=123,
     image_size=img_size,
     batch_size=batch_size,
-    color_mode='grayscale'  # Changed to grayscale
+    color_mode='grayscale',
+    label_mode='int'
 )
 
 val_ds = image_dataset_from_directory(
     DATA_DIR,
-    validation_split=0.1,
-    subset="validation",
-    seed=123,
+    validation_split=0.2,
+    subset="validation",   
+    seed=123,            
     image_size=img_size,
     batch_size=batch_size,
-    color_mode='grayscale'  # Changed to grayscale
+    color_mode='grayscale',
+    label_mode='int'
 )
 
-test_ds = image_dataset_from_directory(
-    DATA_DIR,
-    validation_split=0.1,
-    subset="validation",
-    seed=456,
-    image_size=img_size,
-    batch_size=batch_size,
-    color_mode='grayscale'  # Changed to grayscale
-)
+# No separate test split - we'll use validation set for testing
+test_ds = val_ds
+
+# Add preprocessing utility function to normalize data consistently
+def preprocess_data(ds):
+    # Rescale data consistently
+    normalization_layer = layers.Rescaling(1./255)
+    return ds.map(lambda x, y: (normalization_layer(x), y))
+
+# Normalize datasets
+train_ds = preprocess_data(train_ds)
+val_ds = preprocess_data(val_ds)
+test_ds = preprocess_data(test_ds)
+
+# Verify preprocessing
+for images, labels in train_ds.take(1):
+    print("Training data range:", np.min(images.numpy()), "to", np.max(images.numpy()))
+
+# Print dataset info
+print("Number of training batches:", len(train_ds))
+print("Number of validation batches:", len(val_ds))
 
 # Define the CNN model with single channel input - removed rescaling layer
 model = keras.Sequential([
