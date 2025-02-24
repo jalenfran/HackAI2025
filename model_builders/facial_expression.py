@@ -79,6 +79,7 @@ def main():
     test_X, test_Y   = CRNO(data_test, "test")        # test data
 
     # Updated model architecture with an additional convolutional block for improved accuracy
+    
     model = Sequential([
         tf.keras.layers.Input(shape=(width, height, 1)),
         # Block 1

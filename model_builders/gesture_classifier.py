@@ -71,6 +71,8 @@ test_ds = test_ds.batch(BATCH_SIZE).prefetch(AUTOTUNE)
 print(f"TensorFlow version: {tf.__version__}")
 
 # Create model with explicit names for each layer
+
+
 model = tf.keras.Sequential([
     tf.keras.layers.InputLayer(input_shape=(128, 128, 1), name='input_1'),
     tf.keras.layers.Conv2D(16, 3, padding='same', activation='relu', name='conv_1'),
